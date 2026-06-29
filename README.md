@@ -59,6 +59,17 @@ module the browser uses and the tests exercise:
   same value”, “3 statistical outliers”, “negative value in a field that
   shouldn’t be negative”.
 
+## Test it on a phone (no server)
+
+```bash
+npm run build
+```
+
+This bundles the entire app — engine + sample data — into a single
+**`onceover-standalone.html`**. Open that one file in any browser (including a
+phone, straight from `file://`) and it works fully offline: tap **“Try it”** or
+pick a CSV from your Files app. Nothing uploads; there is no network code.
+
 ## Test it
 
 ```bash
