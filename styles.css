@@ -1,0 +1,170 @@
+/* Three colors only (principle 2): black text, white background, one accent. */
+:root{
+  --ink:#0a0a0a;
+  --paper:#ffffff;
+  --accent:#ff4d00;       /* the one color. reserved for the action. */
+  --muted:#6b6b6b;        /* a neutral tint of ink, not a 4th color */
+  --line:#e7e7e7;
+  --max:760px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  color:var(--ink);
+  background:var(--paper);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---- Buttons: only the accent button is the action ---- */
+.btn{
+  display:inline-block;
+  font-weight:800;
+  text-decoration:none;
+  border-radius:10px;
+  padding:14px 22px;
+  border:2px solid var(--ink);
+  color:var(--ink);
+  background:var(--paper);
+  cursor:pointer;
+  transition:transform .08s ease;
+}
+.btn:active{transform:translateY(1px)}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-ghost{background:transparent}
+.btn-sm{padding:9px 14px;font-size:.9rem}
+.btn-lg{padding:18px 30px;font-size:1.1rem}
+
+/* ---- Header: pricing impossible to miss ---- */
+.nav{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 22px;
+  background:rgba(255,255,255,.9);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.brand{font-weight:900;font-size:1.3rem;letter-spacing:-.02em;color:var(--ink);text-decoration:none}
+.nav-links{display:flex;align-items:center;gap:18px}
+.nav-links a{color:var(--ink);text-decoration:none;font-weight:700}
+
+/* ---- One idea per screen (principle 6) ---- */
+.screen{
+  max-width:var(--max);
+  margin:0 auto;
+  padding:90px 22px;
+  border-bottom:1px solid var(--line);
+}
+.screen h2{font-size:2rem;line-height:1.15;letter-spacing:-.02em;margin-bottom:18px}
+
+/* ---- Hero ---- */
+.hero{padding-top:64px}
+.eyebrow{color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;margin-bottom:18px}
+.hero h1{font-size:3.4rem;line-height:1.02;letter-spacing:-.03em;font-weight:900}
+.mark{color:var(--accent)}
+.sub{font-size:1.25rem;color:var(--muted);margin:22px 0 30px;max-width:560px}
+
+/* ---- Live scanner (try before you pay) ---- */
+.scanner{border:2px solid var(--ink);border-radius:14px;padding:20px;background:var(--paper)}
+.scan-label{display:block;font-weight:800;margin-bottom:10px}
+.scanner textarea{
+  width:100%;font-size:1.05rem;font-family:inherit;
+  border:1px solid var(--line);border-radius:10px;padding:14px;resize:vertical;
+  margin-bottom:14px;color:var(--ink);
+}
+.scanner textarea:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+.scan-hint{color:var(--muted);font-size:.85rem;margin-top:12px}
+
+.result{margin-top:22px;border:2px solid var(--ink);border-radius:14px;padding:22px;animation:rise .25s ease}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.gauge{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:16px}
+.gauge-num{font-size:3rem;font-weight:900;letter-spacing:-.03em}
+.gauge-num small{font-size:1.1rem;color:var(--muted);font-weight:700}
+.gauge-label{font-weight:800;font-size:1.1rem}
+.findings{list-style:none;display:flex;flex-direction:column;gap:12px}
+.findings li{display:flex;gap:12px;align-items:flex-start;font-size:1rem}
+.findings .pill{flex:0 0 auto;font-weight:900;font-size:.75rem;padding:3px 8px;border-radius:6px;border:2px solid var(--ink);margin-top:2px}
+.findings li.miss .pill{background:var(--accent);border-color:var(--accent);color:#fff}
+.findings li.hit .pill{background:var(--ink);color:#fff}
+.result-cta{margin-top:20px;border-top:1px solid var(--line);padding-top:18px}
+.locked-count{font-weight:800;margin-bottom:12px}
+
+/* ---- Empathy ---- */
+.empathy p{font-size:1.2rem;color:var(--muted);margin-bottom:18px}
+.empathy .big{font-size:1.5rem;color:var(--ink);font-weight:800;line-height:1.25}
+
+/* ---- Demo rows ---- */
+.demo-rows{display:flex;flex-direction:column;gap:14px}
+.demo-row{border:2px solid var(--ink);border-radius:12px;padding:18px}
+.demo-row .tag{display:inline-block;font-weight:900;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.demo-row.bad{opacity:.7}
+.demo-row.good{border-color:var(--accent)}
+.demo-row.good .tag{color:var(--accent)}
+.demo-row p{font-size:1.15rem}
+
+/* ---- Stats ---- */
+.stats{display:flex;gap:30px;flex-wrap:wrap;justify-content:space-between}
+.stat{flex:1;min-width:180px}
+.stat .n{display:block;font-size:4rem;font-weight:900;letter-spacing:-.04em;color:var(--accent)}
+.stat .l{display:block;font-size:1.05rem;color:var(--muted);font-weight:600}
+
+/* ---- Compare table ---- */
+.cmp{width:100%;border-collapse:collapse;font-size:1rem}
+.cmp th,.cmp td{text-align:left;padding:14px 12px;border-bottom:1px solid var(--line)}
+.cmp thead th{font-weight:800}
+.cmp .me{background:#fff5f0}
+.cmp th.me{color:var(--accent)}
+
+/* ---- Founder ---- */
+.founder-card{display:flex;gap:24px;align-items:flex-start}
+.founder-face{
+  flex:0 0 110px;height:110px;border-radius:14px;
+  background:var(--ink);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-size:2.4rem;
+  cursor:pointer;
+}
+.founder-words p{color:var(--muted);font-size:1.1rem;margin:14px 0}
+.founder-link{font-weight:800;color:var(--accent);text-decoration:none}
+
+/* ---- Proof ---- */
+.quotes{display:flex;flex-direction:column;gap:18px}
+.quotes blockquote{border-left:4px solid var(--accent);padding:6px 0 6px 18px;font-size:1.15rem}
+.quotes cite{display:block;margin-top:8px;color:var(--muted);font-style:normal;font-weight:700;font-size:.95rem}
+
+/* ---- Pricing ---- */
+.pricing-sub{color:var(--muted);font-size:1.1rem;margin-bottom:30px}
+.tiers{display:flex;gap:16px;flex-wrap:wrap}
+.tier{flex:1;min-width:210px;border:2px solid var(--ink);border-radius:14px;padding:24px;position:relative}
+.tier.featured{border-color:var(--accent);box-shadow:0 10px 0 -4px var(--accent)}
+.tier h3{font-size:1.2rem;margin-bottom:6px}
+.tier .price{font-size:2.6rem;font-weight:900;letter-spacing:-.03em;margin-bottom:16px}
+.tier ul{list-style:none;margin-bottom:20px;display:flex;flex-direction:column;gap:10px}
+.tier li{padding-left:22px;position:relative;color:var(--muted);font-weight:600}
+.tier li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:900}
+.tier .btn{width:100%;text-align:center}
+.badge{position:absolute;top:-12px;left:24px;background:var(--accent);color:#fff;font-weight:900;font-size:.72rem;padding:4px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.05em}
+.guarantee{margin-top:24px;color:var(--muted);font-weight:600;text-align:center}
+
+/* ---- Final CTA ---- */
+.final-cta{text-align:center}
+.final-cta h2{margin-bottom:26px}
+
+/* ---- Footer: finish strong ---- */
+.footer{max-width:var(--max);margin:0 auto;padding:80px 22px 100px;text-align:center}
+.footer-line{font-size:1.9rem;font-weight:900;line-height:1.15;letter-spacing:-.02em}
+.footer-line.accent{color:var(--accent)}
+.share{display:inline-block;margin:28px 0;font-size:1.15rem;font-weight:800;color:var(--ink);text-decoration:none;border-bottom:3px solid var(--accent);padding-bottom:2px}
+.footer-credit{color:var(--muted);font-weight:600;margin-top:20px}
+
+/* ---- Mobile: one idea per screen still holds ---- */
+@media (max-width:640px){
+  .hero h1{font-size:2.5rem}
+  .screen{padding:64px 20px}
+  .screen h2{font-size:1.6rem}
+  .founder-card{flex-direction:column}
+  .stats{gap:20px}
+  .stat .n{font-size:3rem}
+  .footer-line{font-size:1.4rem}
+}

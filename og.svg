@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#ffffff"/>
+  <!-- big high-contrast thumbnail block -->
+  <rect x="0" y="0" width="1200" height="630" fill="#ffffff"/>
+
+  <!-- screaming headline, thumbnail style -->
+  <text x="64" y="180" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="92" letter-spacing="-3" fill="#0a0a0a">Your landing page</text>
+  <text x="64" y="285" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="92" letter-spacing="-3" fill="#0a0a0a">is <tspan fill="#ff4d00">leaking money.</tspan></text>
+
+  <text x="64" y="360" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="34" fill="#6b6b6b">See the exact reasons strangers leave without buying.</text>
+
+  <!-- score gauge, the "number" that makes you click -->
+  <g transform="translate(64,430)">
+    <rect x="0" y="0" width="360" height="130" rx="18" fill="#0a0a0a"/>
+    <text x="28" y="86" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="86" fill="#ff4d00">41</text>
+    <text x="180" y="58" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="26" fill="#ffffff">/ 100</text>
+    <text x="180" y="92" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="22" fill="#9b9b9b">Cold. Nobody buys.</text>
+  </g>
+
+  <!-- brand mark -->
+  <g transform="translate(1000,430)">
+    <rect x="0" y="0" width="136" height="130" rx="22" fill="#ff4d00"/>
+    <text x="68" y="100" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="92" fill="#ffffff" text-anchor="middle">V</text>
+  </g>
+  <text x="1068" y="600" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="30" fill="#0a0a0a" text-anchor="middle">Verdict</text>
+</svg>
