@@ -11,6 +11,7 @@ const sess = require('./lib/session');
 const oauth = require('./lib/oauth');
 const store = require('./lib/store');
 const mockidp = require('./lib/mockidp');
+const stripe = require('./lib/stripe');
 
 const PORT = process.env.PORT || 4321;
 const ROOT = path.join(__dirname, 'public');
@@ -93,21 +94,64 @@ function apiMe(req, res) {
   json(res, 200, {
     provider: oauth.activeProviderName(),
     user: store.publicView(u),
-    freeLimit: FREE_REPORT_LIMIT
+    freeLimit: FREE_REPORT_LIMIT,
+    stripe: stripe.enabled() // tells the UI to use real checkout vs. simulate
   });
 }
 
-// Mock checkout. In production this is a Stripe / Lemon Squeezy WEBHOOK that
-// matches the buyer's email to the OAuth identity and calls recordPurchase.
+// Real Stripe Checkout: create a hosted session and hand back its URL. The
+// account is NOT marked paid here — that happens in the webhook after Stripe
+// confirms the payment (the secure pattern).
+async function checkout(req, res) {
+  const u = currentUser(req);
+  if (!u) return json(res, 401, { error: 'sign in first' });
+  if (!stripe.enabled()) return json(res, 400, { error: 'stripe not configured' });
+  const plan = (new URL(req.url, 'http://x').searchParams.get('plan')) || 'Pro';
+  try {
+    const session = await stripe.createCheckoutSession({
+      uid: u.uid, email: u.email, plan: plan, baseUrl: baseUrl(req)
+    });
+    json(res, 200, { url: session.url, id: session.id });
+  } catch (e) {
+    json(res, 502, { error: 'checkout failed', detail: String(e.message || e) });
+  }
+}
+
+// Stripe webhook: verify signature, then fulfil on checkout.session.completed.
+async function stripeWebhook(req, res) {
+  const raw = await readBody(req);
+  const v = stripe.verifyWebhook(raw, req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET);
+  if (!v.ok) return json(res, 400, { error: 'webhook: ' + v.error });
+  const event = v.event;
+  if (event.type === 'checkout.session.completed') {
+    const s = event.data.object || {};
+    const uid = s.client_reference_id || (s.metadata && s.metadata.uid);
+    const plan = (s.metadata && s.metadata.plan) || 'Pro';
+    if (uid && store.getUser(uid)) {
+      store.recordPurchase(uid, {
+        orderId: s.id || (s.payment_intent) || ('cs-' + Date.now()),
+        plan: plan,
+        amount: (s.amount_total != null ? s.amount_total / 100 : stripe.amountFor(plan) / 100),
+        source: 'stripe'
+      });
+    }
+  }
+  // 2xx tells Stripe we received it; unknown event types are fine to ack.
+  json(res, 200, { received: true });
+}
+
+// Dev-only simulate. Disabled once real Stripe is configured so there is no
+// free-unlock bypass in production.
 function buy(req, res) {
   const u = currentUser(req);
   if (!u) return json(res, 401, { error: 'sign in first' });
+  if (stripe.enabled()) return json(res, 403, { error: 'use /api/checkout — stripe is live' });
   const plan = (new URL(req.url, 'http://x').searchParams.get('plan')) || 'Pro';
-  const prices = { Solo: 29, Pro: 59, Team: 149 };
   const updated = store.recordPurchase(u.uid, {
     orderId: 'OO-' + Date.now().toString(36).toUpperCase(),
     plan: plan,
-    amount: prices[plan] || 59
+    amount: stripe.amountFor(plan) / 100,
+    source: 'simulated'
   });
   json(res, 200, { ok: true, user: store.publicView(updated) });
 }
@@ -188,6 +232,10 @@ const server = http.createServer(async function (req, res) {
     if (p === '/mockidp/token' && req.method === 'POST') return mockidp.token(req, res, await readBody(req));
     if (p === '/mockidp/userinfo') return mockidp.userinfo(req, res);
 
+    // payments
+    if (p === '/api/checkout' && req.method === 'POST') return checkout(req, res);
+    if (p === '/webhooks/stripe' && req.method === 'POST') return stripeWebhook(req, res);
+
     // account API
     if (p === '/api/me') return apiMe(req, res);
     if (p === '/api/buy' && req.method === 'POST') return buy(req, res);
@@ -212,5 +260,8 @@ server.listen(PORT, function () {
   console.log('  Profiler: free, offline, no login. Drop any CSV.');
   console.log('  Accounts: "Sign in" uses the ' + prov + ' provider' +
     (prov === 'mock' ? ' (built-in test IdP — no setup needed).' : '.'));
+  console.log('  Payments: ' + (stripe.enabled()
+    ? 'Stripe Checkout (live)' + (stripe.webhookConfigured() ? ' + webhook verified.' : ' — set STRIPE_WEBHOOK_SECRET!')
+    : 'simulated (set STRIPE_SECRET_KEY to enable real checkout).'));
   console.log('');
 });

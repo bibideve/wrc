@@ -3,7 +3,7 @@
 // file://), every call fails quietly and the page stays a pure local tool.
 (function () {
   'use strict';
-  var state = { me: null, freeLimit: 1, available: false };
+  var state = { me: null, freeLimit: 1, available: false, stripe: false };
 
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -19,8 +19,10 @@
       state.available = true;
       state.me = r.body.user;
       state.freeLimit = r.body.freeLimit;
+      state.stripe = !!r.body.stripe;
       renderAuth();
       if (state.me) loadReports();
+      handleReturn();
     }).catch(function () {
       // no server — hide all account UI, leave the profiler fully working
       state.available = false;
@@ -65,12 +67,37 @@
   }
 
   function doUpgrade() {
-    // In production this redirects to Stripe/Lemon Squeezy checkout; the paid
-    // flag is then set by their webhook. Here we simulate a completed order.
-    if (!confirm('Simulate a one-time Pro purchase ($59) for this account?\n\n(In production this is real checkout; a payment webhook sets "paid".)')) return;
+    if (state.stripe) {
+      // real Stripe Checkout — paid flips via the webhook after payment
+      api('/api/checkout?plan=Pro', { method: 'POST' }).then(function (r) {
+        if (r.ok && r.body.url) location.href = r.body.url;
+        else alert((r.body && r.body.detail) || 'Could not start checkout.');
+      });
+      return;
+    }
+    // dev fallback: no Stripe key set, simulate a completed order
+    if (!confirm('Simulate a one-time Pro purchase ($59) for this account?\n\n(Set STRIPE_SECRET_KEY to use real Stripe Checkout instead.)')) return;
     api('/api/buy?plan=Pro', { method: 'POST' }).then(function (r) {
       if (r.ok) { state.me = r.body.user; renderAuth(); flashAccount('Purchase recorded against your account. Unlimited saves unlocked.'); }
     });
+  }
+
+  // After returning from Stripe Checkout (?purchased=1), the webhook may land a
+  // moment later — poll /api/me briefly until paid flips, then celebrate.
+  function handleReturn() {
+    var q = new URLSearchParams(location.search);
+    if (q.get('canceled')) { history.replaceState({}, '', location.pathname); return; }
+    if (!q.get('purchased')) return;
+    history.replaceState({}, '', location.pathname);
+    var tries = 0;
+    (function poll() {
+      api('/api/me').then(function (r) {
+        state.me = r.body.user;
+        if (state.me && state.me.paid) { renderAuth(); loadReports(true); flashAccount('Payment confirmed — ' + (state.me.plan || 'Pro') + ' unlocked. Unlimited saved reports.'); }
+        else if (tries++ < 6) setTimeout(poll, 1000);
+        else flashAccount('Thanks! Your payment is processing — refresh in a moment.');
+      });
+    })();
   }
 
   // ---- saved reports ----
