@@ -168,6 +168,31 @@
   .foot-links a{text-decoration:none}
   .foot-links a:hover{color:var(--ink)}
   .made{margin-top:22px;font-size:13px;color:var(--muted)}
+
+  /* account / auth UI */
+  .authslot{display:flex;align-items:center;gap:10px}
+  .authslot a.signin{color:var(--ink);text-decoration:none;font-weight:700;font-size:15px;border:1px solid var(--line);padding:9px 14px;border-radius:10px}
+  .authslot a.signin:hover{border-color:var(--accent)}
+  .chip{display:flex;align-items:center;gap:8px;font-size:14px}
+  .chip .av{width:28px;height:28px;font-size:12px;border-radius:50%}
+  .chip .nm{font-weight:700}
+  .chip .plan{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;background:#eef0ff;color:var(--accent);padding:2px 7px;border-radius:999px}
+  .chip .free{background:#f3f4f6;color:#6b7280}
+  .menu{position:relative}
+  .menu .pop{position:absolute;right:0;top:38px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px -16px rgba(0,0,0,.28);min-width:180px;padding:6px;display:none;z-index:60}
+  .menu.open .pop{display:block}
+  .menu .pop button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 11px;border-radius:8px;font-size:14px;cursor:pointer;color:var(--ink)}
+  .menu .pop button:hover{background:var(--soft)}
+  @media(max-width:640px){.authslot .nm{display:none}}
+  #account{display:none;margin:18px 0 4px}
+  .rep-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line)}
+  .rep-row:last-child{border-bottom:0}
+  .rep-row .nm{font-weight:700;flex:1}
+  .rep-row .meta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .rep-row button{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer;font-weight:650}
+  .rep-row button:hover{border-color:var(--accent)}
+  .rep-row button.danger:hover{border-color:#b91c1c;color:#b91c1c}
+  .savebtn{background:var(--accent);color:#fff;border:0;cursor:pointer;font-weight:650;font-size:16px;padding:14px 22px;border-radius:11px}
 </style>
 </head>
 <body>
@@ -180,6 +205,7 @@
     <a class="lk" href="#compare">Compare</a>
     <!-- pricing in the header (principle 16) -->
     <a class="lk" href="#pricing">Pricing</a>
+    <span id="authslot" class="authslot"></span>
     <a class="btn" href="#pricing">Get Onceover — $29</a>
   </div>
 </header>
@@ -206,6 +232,9 @@
 
     <!-- results render here -->
     <div id="results"></div>
+
+    <!-- saved reports (only shown when signed in) -->
+    <div id="account"></div>
   </div>
 
   <!-- HOW: one idea per screen -->
@@ -354,6 +383,7 @@
 </footer>
 
 <script src="/profile.js"></script>
+<script src="/app-auth.js"></script>
 <script>
 (function(){
   var drop = document.getElementById('drop');
@@ -396,6 +426,7 @@
 
   function render(rep){
     if(rep.error){ results.innerHTML='<div class="panel"><div class="head">Couldn\'t read that</div><div style="padding:16px">'+esc(rep.error)+'</div></div>'; results.style.display='block'; return; }
+    window.__lastReport = rep;
 
     var html = '';
 
@@ -458,7 +489,10 @@
       var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='onceover-report.json'; a.click();
     };
     results.scrollIntoView({behavior:'smooth',block:'start'});
+    // let the (optional) account layer add a "Save to my account" button
+    document.dispatchEvent(new CustomEvent('onceover:rendered'));
   }
+  window.OnceoverRender = render; // so saved reports can be re-opened
 
   function handleText(text){
     try { render(window.Onceover.profile(text)); }

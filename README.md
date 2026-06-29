@@ -81,6 +81,49 @@ outliers, correlation, and quality scoring.
 
 ---
 
+## Accounts & “who paid” (OAuth, no passwords)
+
+The profiler is free and needs no account. Signing in unlocks **account
+features** — saving profile reports to your account and (when you’ve paid)
+keeping unlimited ones.
+
+Login is **OAuth 2.0 Authorization Code + PKCE**, so you never store a
+password and the provider (Google/GitHub) enforces its own 2FA. Out of the box
+it runs against a **built-in mock identity provider** so the whole flow works
+with `npm start` and zero setup. Point it at a real provider with env vars:
+
+```bash
+# GitHub
+OAUTH_PROVIDER=github GITHUB_CLIENT_ID=... GITHUB_CLIENT_SECRET=... npm start
+# Google
+OAUTH_PROVIDER=google GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... npm start
+```
+(Register the app’s callback as `http://localhost:4321/auth/callback`. Set
+`SESSION_SECRET` to a random string in production.)
+
+**How “who paid” is tracked without a separate login:** the OAuth identity *is*
+the account. Each account row (`data/users.json`) carries a `paid` flag, the
+`plan`, and an `orders[]` list. In production a Stripe / Lemon Squeezy
+**webhook** matches the buyer’s email to their OAuth identity and flips `paid`.
+The demo simulates that with `POST /api/buy`. Try it:
+
+1. `npm start` → open the app → **Sign in** → pick a test account.
+2. Click **Try it with 25 students**, then **Save to my account**.
+3. Try saving a second report — a **free account is capped at 1** (`402`).
+4. Open your avatar menu → **Upgrade**. The order is recorded; saves go
+   unlimited. The `paid: true` record now lives on your account row.
+
+### Auth endpoints
+
+| Route | What it does |
+|---|---|
+| `GET /auth/login` | Start OAuth (sets a signed, 10-min PKCE/state cookie) |
+| `GET /auth/callback` | Verify `state`, exchange code, open a 30-day session |
+| `GET /auth/logout` | Clear the session |
+| `GET /api/me` | Current account (public-safe view) |
+| `POST /api/buy?plan=` | Record a purchase (stands in for the payment webhook) |
+| `GET/POST/DELETE /api/reports` | List / save / remove account reports |
+
 ## Why your data stays put
 
 The Node server ([`server.js`](server.js)) only serves three static files. It
@@ -91,14 +134,22 @@ same tab. Close the tab and it’s gone.
 ## Project layout
 
 ```
-server.js            tiny zero-dep static file server
+server.js            zero-dep server: static files + auth + account API
+build.js             bundles everything into onceover-standalone.html
+lib/
+  session.js         HMAC-signed cookies (sessions + OAuth transaction)
+  oauth.js           OAuth2 + PKCE; Google / GitHub / mock providers
+  mockidp.js         built-in local identity provider (dev, zero setup)
+  store.js           JSON account store (paid flag, orders, reports)
 public/
-  index.html         the page + UI (loads profile.js)
+  index.html         the page + UI
   profile.js         the engine: CSV parse + statistics (browser + Node)
+  app-auth.js        optional account layer (self-disables offline)
   sample.csv         25-student demo dataset
   og.svg, favicon.svg
 test/
-  profile.test.js    23 assertions, run with `npm test`
+  profile.test.js    engine: 23 assertions
+  auth.test.js       cookies / PKCE / store: 24 assertions
 ```
 
 ## License

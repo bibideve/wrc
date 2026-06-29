@@ -166,6 +166,31 @@
   .foot-links a{text-decoration:none}
   .foot-links a:hover{color:var(--ink)}
   .made{margin-top:22px;font-size:13px;color:var(--muted)}
+
+  /* account / auth UI */
+  .authslot{display:flex;align-items:center;gap:10px}
+  .authslot a.signin{color:var(--ink);text-decoration:none;font-weight:700;font-size:15px;border:1px solid var(--line);padding:9px 14px;border-radius:10px}
+  .authslot a.signin:hover{border-color:var(--accent)}
+  .chip{display:flex;align-items:center;gap:8px;font-size:14px}
+  .chip .av{width:28px;height:28px;font-size:12px;border-radius:50%}
+  .chip .nm{font-weight:700}
+  .chip .plan{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;background:#eef0ff;color:var(--accent);padding:2px 7px;border-radius:999px}
+  .chip .free{background:#f3f4f6;color:#6b7280}
+  .menu{position:relative}
+  .menu .pop{position:absolute;right:0;top:38px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px -16px rgba(0,0,0,.28);min-width:180px;padding:6px;display:none;z-index:60}
+  .menu.open .pop{display:block}
+  .menu .pop button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 11px;border-radius:8px;font-size:14px;cursor:pointer;color:var(--ink)}
+  .menu .pop button:hover{background:var(--soft)}
+  @media(max-width:640px){.authslot .nm{display:none}}
+  #account{display:none;margin:18px 0 4px}
+  .rep-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line)}
+  .rep-row:last-child{border-bottom:0}
+  .rep-row .nm{font-weight:700;flex:1}
+  .rep-row .meta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .rep-row button{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer;font-weight:650}
+  .rep-row button:hover{border-color:var(--accent)}
+  .rep-row button.danger:hover{border-color:#b91c1c;color:#b91c1c}
+  .savebtn{background:var(--accent);color:#fff;border:0;cursor:pointer;font-weight:650;font-size:16px;padding:14px 22px;border-radius:11px}
 </style>
 <script>window.__SAMPLE_CSV__ = "student_id,name,study_hours,attendance_pct,prior_gpa,exam_score,sleep_hours,major,scholarship,enrolled\n1001,Ava Thompson,18,96,3.8,91,7.2,Computer Science,true,2022-09-01\n1002,Liam Garcia,4,61,2.4,58,5.1,Biology,false,2022-09-01\n1003,Noah Patel,12,88,3.2,78,6.8,Computer Science,true,2022-09-01\n1004,Emma Nguyen,22,99,3.9,96,7.5,Mathematics,true,2021-09-01\n1005,Oliver Smith,6,70,2.8,63,5.6,Biology,false,2022-09-01\n1006,Sophia Khan,15,91,3.5,84,6.9,Mathematics,false,2021-09-01\n1007,Mason Lee,9,79,3.0,71,6.2,Economics,false,2022-09-01\n1008,Isabella Rossi,20,97,3.7,93,7.4,Computer Science,true,2021-09-01\n1009,Ethan Brown,2,52,2.1,49,4.7,Economics,false,2023-09-01\n1010,Mia Wilson,17,94,3.6,88,7.1,Mathematics,true,2022-09-01\n1011,Lucas Martin,11,85,3.1,76,6.5,Biology,,2022-09-01\n1012,Charlotte Davis,24,100,4.0,98,7.8,Computer Science,true,2021-09-01\n1013,Benjamin Clark,7,68,2.6,60,5.4,Economics,false,2023-09-01\n1014,Amelia Lewis,14,90,3.4,82,6.7,Mathematics,false,\n1015,Henry Walker,5,64,2.5,55,5.0,Biology,false,2023-09-01\n1016,Evelyn Hall,19,95,3.8,90,7.3,Computer Science,true,2021-09-01\n1017,Alexander Young,3,55,2.2,51,4.9,Economics,false,2023-09-01\n1018,Harper King,16,92,3.5,85,6.9,Mathematics,true,2022-09-01\n1019,Sebastian Wright,10,82,2.9,73,6.3,Biology,false,2022-09-01\n1020,Abigail Scott,21,98,3.9,95,7.6,Computer Science,true,2021-09-01\n1021,Jack Green,8,75,2.7,66,5.9,Economics,false,2023-09-01\n1022,Emily Adams,13,89,3.3,80,6.6,Mathematics,,2022-09-01\n1023,Daniel Baker,1,48,1.9,44,4.5,Biology,false,2023-09-01\n1024,Elizabeth Hill,23,99,3.9,97,7.7,Computer Science,true,2021-09-01\n1025,Matthew Nelson,,86,3.2,77,6.4,Economics,false,2022-09-01\n";</script>
 </head>
@@ -179,6 +204,7 @@
     <a class="lk" href="#compare">Compare</a>
     <!-- pricing in the header (principle 16) -->
     <a class="lk" href="#pricing">Pricing</a>
+    <span id="authslot" class="authslot"></span>
     <a class="btn" href="#pricing">Get Onceover — $29</a>
   </div>
 </header>
@@ -205,6 +231,9 @@
 
     <!-- results render here -->
     <div id="results"></div>
+
+    <!-- saved reports (only shown when signed in) -->
+    <div id="account"></div>
   </div>
 
   <!-- HOW: one idea per screen -->
@@ -713,6 +742,163 @@
 
 </script>
 <script>
+// Optional account layer. Talks to the server's /api/* routes.
+// If there is no server (e.g. the offline single-file build opened from
+// file://), every call fails quietly and the page stays a pure local tool.
+(function () {
+  'use strict';
+  var state = { me: null, freeLimit: 1, available: false };
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function initials(name) { return (name || '?').split(/\s+/).map(function (w) { return w[0]; }).slice(0, 2).join('').toUpperCase(); }
+
+  function api(path, opts) {
+    return fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts || {}))
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, body: j }; }); });
+  }
+
+  function loadMe() {
+    return api('/api/me').then(function (r) {
+      state.available = true;
+      state.me = r.body.user;
+      state.freeLimit = r.body.freeLimit;
+      renderAuth();
+      if (state.me) loadReports();
+    }).catch(function () {
+      // no server — hide all account UI, leave the profiler fully working
+      state.available = false;
+      var slot = el('authslot'); if (slot) slot.style.display = 'none';
+    });
+  }
+
+  function renderAuth() {
+    var slot = el('authslot');
+    if (!slot) return;
+    if (!state.me) {
+      slot.innerHTML = '<a class="signin" href="/auth/login">Sign in</a>';
+      return;
+    }
+    var u = state.me;
+    var planChip = u.paid
+      ? '<span class="plan">' + esc(u.plan || 'Pro') + '</span>'
+      : '<span class="plan free">Free</span>';
+    slot.innerHTML =
+      '<div class="menu" id="usermenu">' +
+        '<div class="chip" style="cursor:pointer">' +
+          '<span class="av">' + esc(initials(u.name)) + '</span>' +
+          '<span class="nm">' + esc(u.name || u.email || 'You') + '</span>' + planChip +
+        '</div>' +
+        '<div class="pop">' +
+          '<button data-act="reports">My reports (' + u.reportCount + ')</button>' +
+          (u.paid ? '' : '<button data-act="buy">Upgrade — unlock unlimited</button>') +
+          '<button data-act="logout">Sign out</button>' +
+        '</div>' +
+      '</div>';
+    var menu = el('usermenu');
+    menu.querySelector('.chip').addEventListener('click', function () { menu.classList.toggle('open'); });
+    menu.querySelectorAll('.pop button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        menu.classList.remove('open');
+        var act = b.getAttribute('data-act');
+        if (act === 'logout') location.href = '/auth/logout';
+        else if (act === 'buy') doUpgrade();
+        else if (act === 'reports') { loadReports(true); el('account').scrollIntoView({ behavior: 'smooth' }); }
+      });
+    });
+  }
+
+  function doUpgrade() {
+    // In production this redirects to Stripe/Lemon Squeezy checkout; the paid
+    // flag is then set by their webhook. Here we simulate a completed order.
+    if (!confirm('Simulate a one-time Pro purchase ($59) for this account?\n\n(In production this is real checkout; a payment webhook sets "paid".)')) return;
+    api('/api/buy?plan=Pro', { method: 'POST' }).then(function (r) {
+      if (r.ok) { state.me = r.body.user; renderAuth(); flashAccount('Purchase recorded against your account. Unlimited saves unlocked.'); }
+    });
+  }
+
+  // ---- saved reports ----
+  function loadReports(forceShow) {
+    if (!state.me) return;
+    api('/api/reports').then(function (r) {
+      if (!r.ok) return;
+      var box = el('account');
+      var reports = r.body.reports || [];
+      if (!reports.length && !forceShow) { box.style.display = 'none'; return; }
+      var rows = reports.map(function (rep) {
+        return '<div class="rep-row" data-id="' + esc(rep.id) + '">' +
+          '<span class="nm">' + esc(rep.name) + '</span>' +
+          '<span class="meta">' + rep.rows + '×' + rep.cols + ' · Q' + rep.quality + ' · ' + rep.issues + ' issue' + (rep.issues === 1 ? '' : 's') + ' · ' + new Date(rep.at).toLocaleDateString() + '</span>' +
+          '<button data-open="' + esc(rep.id) + '">Open</button>' +
+          '<button class="danger" data-del="' + esc(rep.id) + '">Delete</button>' +
+        '</div>';
+      }).join('');
+      box.innerHTML = '<div class="panel"><div class="head">🗂️ Saved to your account ' +
+        '<span class="badge">' + reports.length + (state.me.paid ? '' : ' / ' + state.freeLimit + ' free') + '</span></div>' +
+        (reports.length ? rows : '<div style="padding:14px 16px;color:#6b7280">No saved reports yet. Profile a CSV, then click “Save to my account.”</div>') +
+        '</div>';
+      box.style.display = 'block';
+      box.querySelectorAll('[data-open]').forEach(function (b) {
+        b.addEventListener('click', function () { openReport(b.getAttribute('data-open')); });
+      });
+      box.querySelectorAll('[data-del]').forEach(function (b) {
+        b.addEventListener('click', function () { delReport(b.getAttribute('data-del')); });
+      });
+    });
+  }
+
+  function openReport(id) {
+    api('/api/reports/' + id).then(function (r) {
+      if (r.ok && window.OnceoverRender) window.OnceoverRender(r.body.report);
+    });
+  }
+  function delReport(id) {
+    api('/api/reports/' + id, { method: 'DELETE' }).then(function () {
+      state.me.reportCount = Math.max(0, state.me.reportCount - 1);
+      renderAuth(); loadReports(true);
+    });
+  }
+
+  function flashAccount(msg) {
+    var box = el('account');
+    box.style.display = 'block';
+    box.insertAdjacentHTML('afterbegin', '<div class="panel"><div class="head" style="color:var(--accent)">✓ ' + esc(msg) + '</div></div>');
+    setTimeout(loadReports, 1200);
+  }
+
+  // ---- "Save to my account" button injected into results after each profile ----
+  document.addEventListener('onceover:rendered', function () {
+    if (!state.available) return;
+    var tools = document.querySelector('#results .tools');
+    if (!tools || tools.querySelector('.savebtn')) return;
+    var btn = document.createElement('button');
+    btn.className = 'savebtn';
+    btn.type = 'button';
+    btn.textContent = state.me ? 'Save to my account' : 'Sign in to save';
+    btn.addEventListener('click', function () {
+      if (!state.me) { location.href = '/auth/login'; return; }
+      var name = prompt('Name this report:', 'CSV profile ' + new Date().toLocaleDateString());
+      if (name === null) return;
+      api('/api/reports', { method: 'POST', body: JSON.stringify({ name: name, report: window.__lastReport }) })
+        .then(function (r) {
+          if (r.ok) { btn.textContent = 'Saved ✓'; btn.disabled = true; state.me.reportCount++; renderAuth(); loadReports(true); }
+          else if (r.status === 402) { alert(r.body.message); doUpgrade(); }
+        });
+    });
+    tools.appendChild(btn);
+  });
+
+  // Only attempt accounts when served by the server. Opened as a plain file
+  // (the offline bundle), stay a pure local tool with no network calls.
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    loadMe();
+  } else {
+    var slot = el('authslot'); if (slot) slot.style.display = 'none';
+  }
+})();
+
+</script>
+<script>
 (function(){
   var drop = document.getElementById('drop');
   var fileInput = document.getElementById('file');
@@ -754,6 +940,7 @@
 
   function render(rep){
     if(rep.error){ results.innerHTML='<div class="panel"><div class="head">Couldn\'t read that</div><div style="padding:16px">'+esc(rep.error)+'</div></div>'; results.style.display='block'; return; }
+    window.__lastReport = rep;
 
     var html = '';
 
@@ -816,7 +1003,10 @@
       var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='onceover-report.json'; a.click();
     };
     results.scrollIntoView({behavior:'smooth',block:'start'});
+    // let the (optional) account layer add a "Save to my account" button
+    document.dispatchEvent(new CustomEvent('onceover:rendered'));
   }
+  window.OnceoverRender = render; // so saved reports can be re-opened
 
   function handleText(text){
     try { render(window.Onceover.profile(text)); }
