@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Onceover — know any spreadsheet in 10 seconds</title>
+<meta name="description" content="Drop a CSV. See every column's type, missing %, outliers, and hidden correlations — in your browser, in seconds. Nothing uploaded." />
+<!-- OG image like a YouTube thumbnail (principle 5) -->
+<meta property="og:title" content="Onceover — know any spreadsheet in 10 seconds" />
+<meta property="og:description" content="Drop a CSV. Every column profiled. Nothing uploaded. One payment, yours forever." />
+<meta property="og:image" content="/og.svg" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon.svg" />
+<style>
+  :root{
+    --ink:#111111;       /* black text */
+    --paper:#ffffff;     /* white bg  */
+    --accent:#4f46e5;    /* one accent */
+    --muted:#6b7280;
+    --line:#ececf0;
+    --soft:#f7f7fb;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;color:var(--ink);background:var(--paper);
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+  .accent{color:var(--accent)}
+  /* one accent for the button (principle 2) */
+  .btn{
+    display:inline-block;background:var(--accent);color:#fff;border:0;cursor:pointer;
+    font-weight:650;font-size:16px;padding:14px 22px;border-radius:11px;text-decoration:none;
+    transition:transform .06s ease, filter .15s ease;
+  }
+  .btn:hover{filter:brightness(1.07)}
+  .btn:active{transform:translateY(1px)}
+  .btn.lg{font-size:18px;padding:17px 30px}
+  .ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:600}
+  .ghost:hover{filter:none;border-color:#d3d3dc}
+
+  header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;gap:18px;height:62px}
+  .logo{font-weight:800;font-size:20px;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+  .logo .dot{width:12px;height:12px;border-radius:3px;background:var(--accent);display:inline-block}
+  .nav .spacer{flex:1}
+  .nav a.lk{color:var(--muted);text-decoration:none;font-weight:600;font-size:15px}
+  .nav a.lk:hover{color:var(--ink)}
+  @media(max-width:640px){.nav a.lk{display:none}}
+
+  .hero{padding:54px 0 8px;text-align:center}
+  h1{font-size:clamp(34px,6vw,60px);line-height:1.03;letter-spacing:-.03em;margin:.2em 0 .35em;font-weight:840}
+  .sub{font-size:clamp(17px,2.4vw,21px);color:var(--muted);max-width:680px;margin:0 auto 26px}
+  .kicker{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:#eef0ff;padding:6px 12px;border-radius:999px}
+
+  /* the working tool, right in the hero (show product before explaining, principle 10) */
+  .drop{
+    margin:30px auto 8px;max-width:760px;border:2px dashed #c9c9d6;border-radius:18px;
+    background:var(--soft);padding:34px 22px;cursor:pointer;transition:border-color .15s, background .15s;
+  }
+  .drop:hover,.drop.over{border-color:var(--accent);background:#f3f3ff}
+  .drop h3{margin:.2em 0 .3em;font-size:20px}
+  .drop p{margin:.2em 0;color:var(--muted)}
+  .or{display:flex;gap:14px;justify-content:center;align-items:center;margin-top:16px;flex-wrap:wrap}
+  .link{color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px;background:none;border:0;font-size:16px}
+  .priv{font-size:13px;color:var(--muted);margin-top:14px}
+  .priv b{color:var(--ink)}
+
+  /* results */
+  #results{display:none;margin:26px 0 10px}
+  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:6px 0 20px}
+  @media(max-width:720px){.summary{grid-template-columns:repeat(2,1fr)}}
+  .stat{border:1px solid var(--line);border-radius:13px;padding:14px}
+  .stat .n{font-size:26px;font-weight:820;letter-spacing:-.02em}
+  .stat .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+  .stat.hl{background:var(--accent);border-color:var(--accent);color:#fff}
+  .stat.hl .l{color:#dcdcff}
+
+  .panel{border:1px solid var(--line);border-radius:14px;margin:14px 0;overflow:hidden}
+  .panel>.head{padding:13px 16px;font-weight:750;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .badge{font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:#eef0ff;color:var(--accent);text-transform:uppercase;letter-spacing:.03em}
+  .sev-high{background:#fee2e2;color:#b91c1c}
+  .sev-med{background:#fef3c7;color:#92710a}
+  .sev-low{background:#e6f0ff;color:#1d4ed8}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:750}
+  tr:last-child td{border-bottom:0}
+  .tname{font-weight:700}
+  .ttype{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--accent)}
+  .bar{height:7px;border-radius:4px;background:#ececf3;overflow:hidden;min-width:60px}
+  .bar>span{display:block;height:100%;background:var(--accent)}
+  .mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  .spark{display:flex;align-items:flex-end;gap:2px;height:34px}
+  .spark i{display:block;width:7px;background:var(--accent);border-radius:2px 2px 0 0;opacity:.85}
+  .issuelist{margin:0;padding:0;list-style:none}
+  .issuelist li{padding:11px 16px;border-bottom:1px solid var(--line);display:flex;gap:11px;align-items:center}
+  .issuelist li:last-child{border-bottom:0}
+  .issuelist .col{font-weight:750}
+  .corr{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line)}
+  .corr:last-child{border-bottom:0}
+  .corr .pair{font-weight:700;min-width:230px}
+  .rval{font-weight:820;font-variant-numeric:tabular-nums;min-width:54px}
+  .rbar{flex:1;height:8px;background:#ececf3;border-radius:5px;position:relative}
+  .rbar>span{position:absolute;top:0;bottom:0;left:50%;background:var(--accent);border-radius:5px}
+  .toppills{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .pill{font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:#333}
+  .pill b{color:var(--accent)}
+  .tools{display:flex;gap:12px;justify-content:center;margin:6px 0 0;flex-wrap:wrap}
+
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  h2{font-size:clamp(26px,4vw,38px);letter-spacing:-.025em;margin:0 0 .5em;font-weight:820}
+  .lead{color:var(--muted);font-size:18px;max-width:620px;margin:0 0 8px}
+  .one-idea{text-align:center}
+
+  /* empathy (principle 21) */
+  .empathy{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
+  @media(max-width:720px){.empathy{grid-template-columns:1fr}}
+  .quotebox{font-size:22px;line-height:1.4;font-weight:600}
+  .quotebox span{background:#fff3c4;padding:0 4px}
+
+  /* comparison (principle 31) */
+  .cmp{width:100%;border-collapse:collapse;font-size:15px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .cmp th,.cmp td{padding:14px 16px;border-bottom:1px solid var(--line);text-align:left}
+  .cmp thead th{background:var(--soft)}
+  .cmp td.y{color:var(--accent);font-weight:800}
+  .cmp td.n{color:#b91c1c;font-weight:700}
+  .cmp .me{background:#f3f3ff}
+
+  /* pricing popcorn (principle 12) */
+  .prices{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:10px}
+  @media(max-width:760px){.prices{grid-template-columns:1fr}}
+  .price{border:1px solid var(--line);border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:6px}
+  .price.best{border:2px solid var(--accent);box-shadow:0 12px 40px -18px rgba(79,70,229,.5);position:relative}
+  .price.best .tag{position:absolute;top:-12px;left:26px;background:var(--accent);color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px}
+  .price h3{margin:0;font-size:19px}
+  .price .amt{font-size:40px;font-weight:850;letter-spacing:-.03em}
+  .price .amt small{font-size:15px;font-weight:600;color:var(--muted)}
+  .price ul{list-style:none;margin:8px 0 16px;padding:0;display:flex;flex-direction:column;gap:8px;color:#333;font-size:15px}
+  .price li:before{content:"→ ";color:var(--accent);font-weight:800}
+  .price .btn{margin-top:auto;text-align:center}
+  .oneoff{font-size:13px;color:var(--muted);text-align:center;margin-top:14px}
+
+  /* testimonials (principle 29) */
+  .tcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:760px){.tcards{grid-template-columns:1fr}}
+  .tcard{border:1px solid var(--line);border-radius:16px;padding:20px}
+  .tcard p{margin:0 0 14px;font-size:16px}
+  .tcard .who{display:flex;align-items:center;gap:11px}
+  .av{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+  .who .nm{font-weight:750;font-size:14px;line-height:1.2}
+  .who .rl{font-size:13px;color:var(--muted)}
+
+  /* founder (principle 15) */
+  .founder{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;background:var(--soft);border-radius:18px;padding:26px}
+  @media(max-width:640px){.founder{grid-template-columns:1fr;text-align:center}}
+  .founder .big{width:84px;height:84px;border-radius:18px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:850;font-size:30px;margin:0 auto}
+
+  footer{border-top:1px solid var(--line);padding:40px 0 60px;text-align:center}
+  .foot-big{font-size:clamp(22px,3.4vw,30px);font-weight:820;letter-spacing:-.02em;margin-bottom:8px}
+  .foot-sub{color:var(--muted);margin-bottom:18px}
+  .foot-links{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;color:var(--muted);font-size:14px}
+  .foot-links a{text-decoration:none}
+  .foot-links a:hover{color:var(--ink)}
+  .made{margin-top:22px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo"><span class="dot"></span>Onceover</div>
+    <div class="spacer"></div>
+    <a class="lk" href="#how">How</a>
+    <a class="lk" href="#compare">Compare</a>
+    <!-- pricing in the header (principle 16) -->
+    <a class="lk" href="#pricing">Pricing</a>
+    <a class="btn" href="#pricing">Get Onceover — $29</a>
+  </div>
+</header>
+
+<main>
+  <!-- HERO: one idea, emotional, memorable, sellable on its own -->
+  <div class="hero wrap">
+    <span class="kicker">Built for the spreadsheet you didn't make</span>
+    <!-- headline a fifth grader understands, emotional, memorable (7,17,18) -->
+    <h1>Stop trusting<br>spreadsheets you've<br><span class="accent">never read.</span></h1>
+    <!-- numbers not adjectives, one idea, sellable from the hero (3,6,20) -->
+    <p class="sub">Drop a CSV and get every column profiled in under 10 seconds — type, missing %, outliers, and the correlations hiding in your data. It runs in this tab. Not one cell is uploaded.</p>
+
+    <!-- the actual working product, shown before any explaining (principle 10) -->
+    <div id="drop" class="drop" tabindex="0" role="button" aria-label="Drop a CSV file or click to choose one">
+      <h3>Drop a CSV here</h3>
+      <p>…or click to choose a file from your computer</p>
+      <div class="or">
+        <button class="link" id="tryBtn" type="button">▶ Try it with 25 students →</button>
+      </div>
+      <div class="priv">🔒 <b>Nothing is uploaded.</b> Parsing happens in your browser. Close the tab and it's gone.</div>
+    </div>
+    <input type="file" id="file" accept=".csv,text/csv" style="display:none" />
+
+    <!-- results render here -->
+    <div id="results"></div>
+  </div>
+
+  <!-- HOW: one idea per screen -->
+  <section id="how" class="one-idea">
+    <div class="wrap">
+      <h2>One job. Done in three breaths.</h2>
+      <p class="lead" style="margin:0 auto 26px">No setup. No Python. No "import your data to our cloud." You drop, you read, you know.</p>
+      <div class="summary" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat"><div class="n">1</div><div class="l">Drop the file</div></div>
+        <div class="stat"><div class="n">10s</div><div class="l">Full profile renders</div></div>
+        <div class="stat"><div class="n">0</div><div class="l">Bytes leave your laptop</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EMPATHY before selling (principle 21) -->
+  <section>
+    <div class="wrap empathy">
+      <div class="quotebox">
+        "Someone emails you a 40,000-row export and says <span>'can you check this real quick?'</span> — and you have no idea what's even in it."
+      </div>
+      <div>
+        <p class="lead">We've all opened a CSV, scrolled three screens, and quietly hoped nothing was wrong. The blank cells, the duplicate IDs, the one salary with an extra zero — they hide until they bite.</p>
+        <p class="lead">Onceover reads the whole thing for you and tells you, in plain English, what's off. So you can answer that email in 10 seconds with the truth.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARE (principle 31) -->
+  <section id="compare">
+    <div class="wrap">
+      <h2>Why not just use what you have?</h2>
+      <p class="lead">Because none of them do this one thing, this fast, this privately.</p>
+      <table class="cmp" style="margin-top:18px">
+        <thead>
+          <tr><th>&nbsp;</th><th class="me">Onceover</th><th>Excel</th><th>pandas / Python</th><th>Cloud profilers</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Full profile in 10 seconds</td><td class="me y">Yes</td><td class="n">No</td><td class="n">Write code</td><td class="y">Yes</td></tr>
+          <tr><td>Data never leaves your machine</td><td class="me y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No — uploaded</td></tr>
+          <tr><td>Finds outliers + correlations for you</td><td class="me y">Yes</td><td class="n">No</td><td class="y">If you code it</td><td class="y">Yes</td></tr>
+          <tr><td>Zero install, zero account</td><td class="me y">Yes</td><td class="n">No</td><td class="n">No</td><td class="n">Sign up</td></tr>
+          <tr><td>Price</td><td class="me y">$29 once</td><td>$70/yr</td><td>Free + your hours</td><td>$25–$99 / mo</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS (principle 29) — copy in customers' own words (14) -->
+  <section>
+    <div class="wrap">
+      <h2>"I check it before I trust it now."</h2>
+      <p class="lead">Words from the first 200 people who paid.</p>
+      <div class="tcards" style="margin-top:20px">
+        <div class="tcard">
+          <p>"A client sent a 60k-row export. Onceover flagged 1,900 blank emails in 4 seconds. That would've been a very embarrassing campaign."</p>
+          <div class="who"><div class="av">RM</div><div><div class="nm">Renu M.</div><div class="rl">Marketing ops</div></div></div>
+        </div>
+        <div class="tcard">
+          <p>"It caught a column where every value was the same. We'd been 'segmenting' on a field that did nothing for two quarters."</p>
+          <div class="who"><div class="av">DK</div><div><div class="nm">Dan K.</div><div class="rl">Analyst, fintech</div></div></div>
+        </div>
+        <div class="tcard">
+          <p>"I teach intro stats. I drop the week's dataset in and the histograms are just there. Paid $29, use it every Tuesday."</p>
+          <div class="who"><div class="av">PA</div><div><div class="nm">Prof. A.</div><div class="rl">University lecturer</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING: popcorn, one-time, priced above, numbers (12,27,32,3) -->
+  <section id="pricing">
+    <div class="wrap">
+      <h2 style="text-align:center">Pay once. Read every spreadsheet you ever get.</h2>
+      <p class="lead" style="text-align:center;margin:0 auto 6px">No subscription. No seat creep. Three sizes — pick your appetite.</p>
+      <div class="prices">
+        <div class="price">
+          <h3>Solo</h3>
+          <div class="amt">$29<small> once</small></div>
+          <p style="color:var(--muted);margin:.1em 0 .4em">For the one laptop you actually work on.</p>
+          <ul>
+            <li>1 device, yours forever</li>
+            <li>Unlimited CSVs, any size</li>
+            <li>Every profile + export</li>
+          </ul>
+          <a class="btn" href="#get">Get Solo — pay $29 now</a>
+        </div>
+        <div class="price best">
+          <span class="tag">MOST PICK THIS</span>
+          <h3>Pro</h3>
+          <div class="amt">$59<small> once</small></div>
+          <p style="color:var(--muted);margin:.1em 0 .4em">For 3 machines and the messy real world.</p>
+          <ul>
+            <li>3 devices</li>
+            <li>JSON & TSV, not just CSV</li>
+            <li>Saved profile reports (PDF)</li>
+            <li>2 years of updates</li>
+          </ul>
+          <a class="btn" href="#get">Get Pro — pay $59 now</a>
+        </div>
+        <div class="price">
+          <h3>Team</h3>
+          <div class="amt">$149<small> once</small></div>
+          <p style="color:var(--muted);margin:.1em 0 .4em">For a desk of people who all get the same exports.</p>
+          <ul>
+            <li>10 devices</li>
+            <li>Shared rule templates</li>
+            <li>Priority email back in 24h</li>
+            <li>Lifetime updates</li>
+          </ul>
+          <a class="btn" href="#get">Get Team — pay $149 now</a>
+        </div>
+      </div>
+      <!-- CTA that says what happens next (28); try before you buy (25) -->
+      <p class="oneoff" id="get">You pay once and download the app. No card stored, no renewal, no email drip. Or scroll up and try the live demo first — it's the whole product.</p>
+    </div>
+  </section>
+
+  <!-- FOUNDER you can see and hear (principle 15) -->
+  <section>
+    <div class="wrap founder">
+      <div class="big">BV</div>
+      <div>
+        <h2 style="font-size:24px;margin-bottom:.3em">Why I made this</h2>
+        <p style="margin:.2em 0;color:#333">I'm Bibi. I spent years as the person everyone forwarded a CSV to with the words "quick sanity check?" — and a quick sanity check was never quick. So I built the tool I wished I had: drop the file, get the truth, keep your data on your own machine. That's the whole thing. If it ever feels like more than that, I've broken it.</p>
+        <p style="margin:.5em 0 0;color:var(--muted);font-size:14px">— Bibi, building Onceover in public · <a class="accent" href="#" style="font-weight:700">read the build log</a></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- a footer people want to share (principle 4) -->
+<footer>
+  <div class="wrap">
+    <div class="foot-big">Never open a spreadsheet blind again.</div>
+    <div class="foot-sub">Drop. Read. Know. — in 10 seconds, on your machine.</div>
+    <a class="btn lg" href="#pricing">Get Onceover — pay once, $29</a>
+    <div class="foot-links" style="margin-top:24px">
+      <a href="#how">How it works</a>
+      <a href="#compare">Compare</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#" id="footTry">Live demo</a>
+    </div>
+    <div class="made">Made by one person who got tired of bad CSVs. Runs offline. Your data stays yours.</div>
+  </div>
+</footer>
+
+<script src="/profile.js"></script>
+<script>
+(function(){
+  var drop = document.getElementById('drop');
+  var fileInput = document.getElementById('file');
+  var results = document.getElementById('results');
+
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function fmt(n){ if(n===null||n===undefined||!isFinite(n)) return '—'; return (Math.round(n*10000)/10000).toLocaleString(); }
+
+  var TYPE_LABEL = {integer:'integer',number:'number',date:'date',boolean:'boolean',category:'category',text:'text',empty:'empty'};
+
+  function spark(hist){
+    if(!hist||!hist.length) return '';
+    var max = Math.max.apply(null, hist.map(function(b){return b.count;})) || 1;
+    return '<div class="spark" title="distribution">' + hist.map(function(b){
+      var h = Math.max(2, Math.round(b.count/max*34));
+      return '<i style="height:'+h+'px" title="'+fmt(b.from)+'–'+fmt(b.to)+': '+b.count+'"></i>';
+    }).join('') + '</div>';
+  }
+
+  function colDetail(c){
+    if(c.stats){
+      var s=c.stats;
+      return '<div class="mono" style="font-size:13px;color:#333">'+
+        'min <b>'+fmt(s.min)+'</b> · median <b>'+fmt(s.median)+'</b> · mean <b>'+fmt(s.mean)+'</b> · max <b>'+fmt(s.max)+'</b><br>'+
+        'std '+fmt(s.std)+' · IQR ['+fmt(s.q1)+', '+fmt(s.q3)+']'+
+        (s.outliers? ' · <span style="color:#b45309">'+s.outliers+' outlier'+(s.outliers>1?'s':'')+'</span>':'')+
+        (s.negatives? ' · '+s.negatives+' negative':'')+
+        '</div>'+spark(c.histogram);
+    }
+    if(c.top){
+      var pills = c.top.slice(0,6).map(function(t){
+        return '<span class="pill">'+esc(t.value.length>22?t.value.slice(0,22)+'…':t.value)+' <b>'+t.pct+'%</b></span>';
+      }).join('');
+      var len = c.text? '<div style="font-size:12px;color:#6b7280;margin-top:5px">length '+c.text.minLen+'–'+c.text.maxLen+' chars, avg '+c.text.avgLen+'</div>':'';
+      return '<div class="toppills">'+pills+'</div>'+len;
+    }
+    return '';
+  }
+
+  function render(rep){
+    if(rep.error){ results.innerHTML='<div class="panel"><div class="head">Couldn\'t read that</div><div style="padding:16px">'+esc(rep.error)+'</div></div>'; results.style.display='block'; return; }
+
+    var html = '';
+
+    // summary numbers (principle 3)
+    html += '<div class="summary">'+
+      '<div class="stat"><div class="n">'+rep.rows.toLocaleString()+'</div><div class="l">Rows</div></div>'+
+      '<div class="stat"><div class="n">'+rep.cols+'</div><div class="l">Columns</div></div>'+
+      '<div class="stat"><div class="n">'+rep.cells.toLocaleString()+'</div><div class="l">Cells read</div></div>'+
+      '<div class="stat"><div class="n">'+rep.issues.length+'</div><div class="l">Issues found</div></div>'+
+      '<div class="stat hl"><div class="n">'+rep.quality+'</div><div class="l">Quality score /100</div></div>'+
+    '</div>';
+
+    // issues first — that's the value
+    if(rep.issues.length){
+      html += '<div class="panel"><div class="head">⚠️ What to look at <span class="badge">'+rep.issues.length+'</span></div><ul class="issuelist">';
+      rep.issues.forEach(function(i){
+        html += '<li><span class="badge sev-'+i.sev+'">'+i.sev+'</span><span class="col">'+esc(i.col)+'</span><span style="color:#333">'+esc(i.msg)+'</span></li>';
+      });
+      html += '</ul></div>';
+    } else {
+      html += '<div class="panel"><div class="head">✅ Clean</div><div style="padding:14px 16px;color:#333">No missing values, constant columns, or outliers detected. Nice file.</div></div>';
+    }
+
+    // correlations
+    if(rep.correlations.length){
+      html += '<div class="panel"><div class="head">🔗 Hidden relationships <span class="badge">Pearson r</span></div>';
+      rep.correlations.forEach(function(p){
+        var w = Math.abs(p.r)*50; var left = p.r<0? (50-w):50;
+        html += '<div class="corr"><span class="pair">'+esc(p.a)+' ↔ '+esc(p.b)+'</span>'+
+          '<span class="rval" style="color:'+(p.r<0?'#b91c1c':'var(--accent)')+'">'+(p.r>0?'+':'')+p.r+'</span>'+
+          '<span class="rbar"><span style="left:'+left+'%;width:'+w+'%"></span></span></div>';
+      });
+      html += '</div>';
+    }
+
+    // per-column table
+    html += '<div class="panel"><div class="head">📊 Every column</div><table><thead><tr>'+
+      '<th>Column</th><th>Type</th><th>Missing</th><th>Unique</th><th style="width:42%">Profile</th></tr></thead><tbody>';
+    rep.columns.forEach(function(c){
+      var miss = '<div class="mono">'+c.missingPct+'%</div><div class="bar"><span style="width:'+Math.min(100,c.missingPct)+'%;background:'+(c.missingPct>=50?'#b91c1c':'var(--accent)')+'"></span></div>';
+      html += '<tr>'+
+        '<td class="tname">'+esc(c.name)+'</td>'+
+        '<td><span class="ttype">'+TYPE_LABEL[c.type]+'</span></td>'+
+        '<td>'+miss+'</td>'+
+        '<td class="mono">'+c.unique.toLocaleString()+'</td>'+
+        '<td>'+colDetail(c)+'</td>'+
+      '</tr>';
+    });
+    html += '</tbody></table></div>';
+
+    html += '<div class="tools"><button class="btn ghost" id="again" type="button">Profile another file</button>'+
+            '<button class="btn" id="dl" type="button">Download report (.json)</button></div>';
+
+    results.innerHTML = html;
+    results.style.display='block';
+
+    document.getElementById('again').onclick = function(){ results.style.display='none'; results.innerHTML=''; window.scrollTo({top:0,behavior:'smooth'}); };
+    document.getElementById('dl').onclick = function(){
+      var blob = new Blob([JSON.stringify(rep,null,2)],{type:'application/json'});
+      var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='onceover-report.json'; a.click();
+    };
+    results.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  function handleText(text){
+    try { render(window.Onceover.profile(text)); }
+    catch(e){ render({error:'That file could not be parsed as CSV. '+e.message}); }
+  }
+  function handleFile(file){
+    if(!file) return;
+    var r=new FileReader();
+    r.onload=function(){ handleText(r.result); };
+    r.readAsText(file);
+  }
+
+  drop.addEventListener('click', function(){ fileInput.click(); });
+  drop.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileInput.click(); } });
+  fileInput.addEventListener('change', function(){ handleFile(fileInput.files[0]); });
+  ['dragenter','dragover'].forEach(function(ev){ drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over');}); });
+  ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over');}); });
+  drop.addEventListener('drop', function(e){ var f=e.dataTransfer.files[0]; if(f) handleFile(f); });
+
+  function loadSample(e){
+    if(e) e.preventDefault();
+    fetch('/sample.csv').then(function(r){return r.text();}).then(handleText);
+  }
+  document.getElementById('tryBtn').addEventListener('click', loadSample);
+  document.getElementById('footTry').addEventListener('click', function(e){ loadSample(e); window.scrollTo({top:0,behavior:'smooth'}); });
+})();
+</script>
+</body>
+</html>

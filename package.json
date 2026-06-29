@@ -1,0 +1,12 @@
+{
+  "name": "onceover",
+  "version": "1.0.0",
+  "description": "Give any spreadsheet the once-over. Profile a CSV in your browser in seconds — nothing uploaded.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/profile.test.js"
+  },
+  "license": "MIT",
+  "private": true
+}

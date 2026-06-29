@@ -1,0 +1,26 @@
+student_id,name,study_hours,attendance_pct,prior_gpa,exam_score,sleep_hours,major,scholarship,enrolled
+1001,Ava Thompson,18,96,3.8,91,7.2,Computer Science,true,2022-09-01
+1002,Liam Garcia,4,61,2.4,58,5.1,Biology,false,2022-09-01
+1003,Noah Patel,12,88,3.2,78,6.8,Computer Science,true,2022-09-01
+1004,Emma Nguyen,22,99,3.9,96,7.5,Mathematics,true,2021-09-01
+1005,Oliver Smith,6,70,2.8,63,5.6,Biology,false,2022-09-01
+1006,Sophia Khan,15,91,3.5,84,6.9,Mathematics,false,2021-09-01
+1007,Mason Lee,9,79,3.0,71,6.2,Economics,false,2022-09-01
+1008,Isabella Rossi,20,97,3.7,93,7.4,Computer Science,true,2021-09-01
+1009,Ethan Brown,2,52,2.1,49,4.7,Economics,false,2023-09-01
+1010,Mia Wilson,17,94,3.6,88,7.1,Mathematics,true,2022-09-01
+1011,Lucas Martin,11,85,3.1,76,6.5,Biology,,2022-09-01
+1012,Charlotte Davis,24,100,4.0,98,7.8,Computer Science,true,2021-09-01
+1013,Benjamin Clark,7,68,2.6,60,5.4,Economics,false,2023-09-01
+1014,Amelia Lewis,14,90,3.4,82,6.7,Mathematics,false,
+1015,Henry Walker,5,64,2.5,55,5.0,Biology,false,2023-09-01
+1016,Evelyn Hall,19,95,3.8,90,7.3,Computer Science,true,2021-09-01
+1017,Alexander Young,3,55,2.2,51,4.9,Economics,false,2023-09-01
+1018,Harper King,16,92,3.5,85,6.9,Mathematics,true,2022-09-01
+1019,Sebastian Wright,10,82,2.9,73,6.3,Biology,false,2022-09-01
+1020,Abigail Scott,21,98,3.9,95,7.6,Computer Science,true,2021-09-01
+1021,Jack Green,8,75,2.7,66,5.9,Economics,false,2023-09-01
+1022,Emily Adams,13,89,3.3,80,6.6,Mathematics,,2022-09-01
+1023,Daniel Baker,1,48,1.9,44,4.5,Biology,false,2023-09-01
+1024,Elizabeth Hill,23,99,3.9,97,7.7,Computer Science,true,2021-09-01
+1025,Matthew Nelson,,86,3.2,77,6.4,Economics,false,2022-09-01
